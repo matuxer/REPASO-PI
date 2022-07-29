@@ -12,7 +12,6 @@ export const HomePage = () => {
   useEffect(() => {
     dispatch(getCharacters())
   }, [dispatch]);
-  console.log(characters);
   return (
     <div>
       <header>

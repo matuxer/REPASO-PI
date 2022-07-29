@@ -1,6 +1,8 @@
 import React from 'react'
 import NavBar from './NavBar'
 import axios from 'axios';
+import { useSelector } from 'react-redux';
+import styles from './Form.module.css';
 
 const validate = (input) => {
   let error = {};
@@ -13,6 +15,9 @@ const validate = (input) => {
   if (input.origin.length === 0) {
     error.origin = "Se requiere un origen"
   };
+  if (input.episodes.length === 0) {
+    error.episodes = "Se requiere minimo 1 episodio"
+  }
   return error;
 }
 
@@ -21,9 +26,15 @@ function Form() {
     name: "",
     species: "",
     origin: "",
-    image: ""
+    image: "",
+    episodes: []
   }
 
+  const episodes = (useSelector(state => state.episodes)).sort((a, b) => {
+    if (a.id > b.id) return 1;
+    if (a.id < b.id) return -1;
+    return 0;
+  });;
   let [input, setInput] = React.useState(initialState);
   let [error, setError] = React.useState({});
 
@@ -37,22 +48,38 @@ function Form() {
     return error;
   }
   
+  let handleCheckBox = (e) => {
+    let epList = [...input.episodes]
+    if(e.target.checked){
+      epList = [...input.episodes, e.target.value]
+    }else {
+      epList.splice(input.episodes.indexOf(e.target.value), 1);
+    }
+    setInput(prevState => ({
+      ...prevState,
+      episodes: epList
+    }));
+    let error = validate({...input, [e.target.name]: e.target.value});
+    setError(error);
+    return error;
+  }
+
   let handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.image) {
       await axios.post('http://localhost:3001/character', {
         name: input.name,
         species: input.species,
-        origin: input.origin
+        origin: input.origin,
+        episodes: input.episodes 
       })
     }else{
       await axios.post('http://localhost:3001/character', input)
     }
     setInput(initialState)
   }
-  
-  console.log(input);
-  console.log(Object.keys(error));
+  console.log(input)
+  console.log(episodes);
   return (
     <div>
       <NavBar />
@@ -92,6 +119,17 @@ function Form() {
           onChange={handleOnChange}
           name='image'
           />
+        </div>
+        <div>
+          <ol>
+          {episodes.map((ep) => (
+            <li key={ep.id}>
+              <label htmlFor='episodes'>
+                <input value={ep.name} name='episodes' type='checkbox' onChange={handleCheckBox} />{ep.name}
+              </label>
+            </li>
+          ))}
+          </ol>
         </div>
         <input disabled={Object.keys(error).length>0} type='submit' value='ENVIAR'/>
       </form>
