@@ -14,13 +14,19 @@ const getApiCharacters = async function () {
     origin: e.origin.name,
     image: e.image,
     created: e.created,
+    episode: e.episode
     }
   });
   return result;
 };
 
 const getDbCharacters = async function () {
-  const dbCharacters = await Character.findAll();
+  const dbCharacters = await Character.findAll({
+    include: [{
+      model: Episode,
+      attributes: ["name"],
+    }]
+  });
   const result = await dbCharacters.map(e => {
     return {
       id: e.id,
@@ -28,7 +34,8 @@ const getDbCharacters = async function () {
       species: e.species,
       origin: e.origin,
       image: e.image,
-      created: e.created
+      created: e.created,
+      episode: e.episodes.map(ep => ep.name)
     }
   })
   return result;
@@ -46,6 +53,7 @@ const getAllEpisodes = async function () {
   await apiEpisodes.map(e => {
     Episode.findOrCreate({
       where: {
+        id: e.id,
         name: e.name,
       }
     })
